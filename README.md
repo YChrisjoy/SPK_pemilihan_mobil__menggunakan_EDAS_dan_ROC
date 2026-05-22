@@ -1,0 +1,1 @@
+# SPK_pemilihan_mobil__menggunakan_EDAS_dan_ROC
