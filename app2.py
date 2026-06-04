@@ -162,7 +162,7 @@ with st.sidebar:
     else:
         st.write("Total Mobil: **0** unit (Data belum siap)")
 
-# 1. HALAMAN UTAMA (LANDING PAGE)
+# Halaman landing page
 if st.session_state.page == 'landing':
     st.markdown("<h1 style='text-align: center;'>Sistem Pendukung Keputusan Pemilihan Mobil</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>Menggunakan Metode EDAS & Pembobotan ROC</p>", unsafe_allow_html=True)
@@ -170,7 +170,8 @@ if st.session_state.page == 'landing':
 
     col_l1, col_l2 = st.columns([2, 1])
     with col_l1:
-        st.write("Selamat datang! Sistem ini dirancang untuk membantu Anda menemukan mobil terbaik berdasarkan kriteria teknis secara objektif.")
+        st.write("Selamat datang! Sistem ini dirancang untuk membantu Anda" \
+        " menemukan mobil terbaik berdasarkan kriteria teknis secara objektif.")
         st.write("Sistem menggunakan data default jika Anda tidak mengunggah data sendiri.")
     
     with col_l2:
@@ -186,7 +187,7 @@ if st.session_state.page == 'landing':
         if st.button("Gunakan Pembobotan Manual", use_container_width=True):
             move_to('manual_input')
 
-#2. HALAMAN TAMBAHAN: UPLOAD & KETENTUAN DATA
+# Halaman upload data mobil dan ketentuan data
 elif st.session_state.page == 'upload_page':
     st.title("Upload Data & Panduan Data Mobil")
     
@@ -279,7 +280,7 @@ elif st.session_state.page == 'upload_page':
             move_to('detail_mobil')
     
 
-#  2. HALAMAN RANKING PRIORITAS (ROC) 
+#  2. Halaman pembobotan kriteria menggunakan ROC 
 elif st.session_state.page == 'roc_ranking':
     st.title("Halaman Ranking Prioritas (ROC)")
     st.info("💡 Pindahkan item di sebelah kanan dengan cara klik, tahan, lalu geser (Drag and Drop) ke atas atau ke bawah. Kriteria di urutan paling atas adalah prioritas utama.")
@@ -400,7 +401,7 @@ elif st.session_state.page == 'roc_ranking':
     if st.button("⬅️ Kembali ke Landing Page"):
         move_to('landing')
 
-#  3. HALAMAN PEMBOBOTAN MANUAL
+#  3. Halaman pembobotan manual kriteria
 elif st.session_state.page == 'manual_input':
     st.title("Halaman Pembobotan Manual")
     st.write("Masukkan nilai bobot (0.0 - 1.0) untuk setiap kriteria.")
@@ -420,24 +421,25 @@ elif st.session_state.page == 'manual_input':
     # Form Input Bobot Manual
     c1, c2 = st.columns(2)
     with c1:
-        w1 = st.number_input("Cars Prices (Cost)", 0.0, 1.0, 0.0, format="%.4f")
-        w2 = st.number_input("Total Speed (Benefit)", 0.0, 1.0, 0.0, format="%.4f")
-        w3 = st.number_input("Engine Capacity (Benefit)", 0.0, 1.0, 0.0, format="%.4f")
+        w1 = st.number_input("Cars Prices (Cost)", value=0.0, format="%.4f")
+        w2 = st.number_input("Total Speed (Benefit)", value=0.0, format="%.4f")
+        w3 = st.number_input("Engine Capacity (Benefit)", value=0.0, format="%.4f")
     with c2:
-        w4 = st.number_input("Horsepower (Benefit)", 0.0, 1.0, 0.0, format="%.4f")
-        w5 = st.number_input("Performance (Cost)", 0.0, 1.0, 0.0, format="%.4f")
-        w6 = st.number_input("Seats (Benefit)", 0.0, 1.0, 0.0, format="%.4f")
-        w7 = st.number_input("Torque (Benefit)", 0.0, 1.0, 0.0, format="%.4f")
+        w4 = st.number_input("Horsepower (Benefit)", value=0.0, format="%.4f")
+        w5 = st.number_input("Performance (Cost)", value=0.0, format="%.4f")
+        w6 = st.number_input("Seats (Benefit)", value=0.0, format="%.4f")
+        w7 = st.number_input("Torque (Benefit)", value=0.0, format="%.4f")
+
+    tempat_notifikasi = st.empty()
 
     st.write("---")
     
-    # Tombol Aksi - Menambahkan tombol Lihat Detail Mobil di sini
+    # Tombol Aksi
     col_x, col_mid, col_y = st.columns(3)
     
     with col_x:
-        # Menambahkan fitur lihat data sebelum input manual
         if st.button("Lihat Detail Mobil", key="btn_view_manual"):
-            st.session_state.return_to = 'manual_input' # Menyimpan alamat kembali
+            st.session_state.return_to = 'manual_input' 
             move_to('detail_mobil')
             
     with col_mid:
@@ -446,19 +448,27 @@ elif st.session_state.page == 'manual_input':
             
     with col_y:
         if st.button("Hitung Rekomendasi 🚀", type="primary"):
-            st.session_state.bobot_kriteria = {
-                "Cars Prices": w1, "Total Speed": w2, "Engine Capacity": w3,
-                "Horsepower": w4, "Performance": w5, "Seats": w6, "Torque": w7
-            }
-            st.session_state.metode_dipakai = "Manual (Subjektif)"
-            move_to('hitung_hasil')
+            
+            semua_bobot = [w1, w2, w3, w4, w5, w6, w7]
+            
+            # Cek apakah ada bobot yang melanggar aturan
+            if any(bobot > 1.0 or bobot < 0.0 for bobot in semua_bobot):
+                # 2. TAMPILKAN ERROR DI DALAM WADAH KOSONG TADI
+                tempat_notifikasi.error("⚠️ Gagal memproses! Pastikan semua nilai bobot tidak lebih dari 1.0 dan tidak kurang dari 0.0.")
+            else:
+                st.session_state.bobot_kriteria = {
+                    "Cars Prices": w1, "Total Speed": w2, "Engine Capacity": w3,
+                    "Horsepower": w4, "Performance": w5, "Seats": w6, "Torque": w7
+                }
+                st.session_state.metode_dipakai = "Manual (Subjektif)"
+                move_to('hitung_hasil')
 
     st.divider()
     if st.button("⬅️ Kembali ke Menu Utama"):
         move_to('landing')
 
 
-#  4. HALAMAN DETAIL MOBIL 
+#  4. Halaman daftar detail mobil 
 elif st.session_state.page == 'detail_mobil':
     st.title("Detail Spesifikasi Mobil")
     
@@ -476,7 +486,7 @@ elif st.session_state.page == 'detail_mobil':
     if st.button("⬅️ Kembali ke Halaman Sebelumnya"):
         move_to(target_kembali)
 
-#  5. HALAMAN HITUNG & HASIL 
+#  5. Halaman hitung dan hasil perangkingan alternatif mobil terbaik  
 elif st.session_state.page == 'hitung_hasil':
     st.title("Hasil Rekomendasi Pemilihan Mobil")
     
