@@ -328,8 +328,6 @@ elif st.session_state.page == 'roc_ranking':
             st.markdown(
                 f"""
                 <div style='
-                    background-color: #173928; 
-                    color: #3ec673; 
                     border: 1px solid #000000; 
                     border-radius: 0.25rem; 
                     margin-bottom: 0.5rem; 
@@ -358,7 +356,6 @@ elif st.session_state.page == 'roc_ranking':
             st.markdown(
                 f"""
                 <div style='
-                    background-color: #173928; 
                     color: {warna_teks}; 
                     border: 1px solid #000000; 
                     border-radius: 0.25rem; 
