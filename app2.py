@@ -255,18 +255,41 @@ elif st.session_state.page == 'upload_page':
 
     # Logika jika file berhasil diupload
     if file_upload:
-        df = pd.read_csv(file_upload)
-        if len(df.columns) == 1: 
-            file_upload.seek(0)
-            df = pd.read_csv(file_upload, sep=';')
+        try:
+            # Membaca file CSV
+            df = pd.read_csv(file_upload)
+            if len(df.columns) == 1: 
+                file_upload.seek(0)
+                df = pd.read_csv(file_upload, sep=';')
+                
+            df.columns = df.columns.str.strip()
+            df = standarisasi_kolom(df) 
             
-        df.columns = df.columns.str.strip()
-        df = standarisasi_kolom(df) 
-        
-        st.session_state.df_mentah = df
-        st.session_state.is_custom_data = True
-        st.success("Data berhasil diunggah! Anda sekarang bisa kembali ke Menu Utama untuk memulai perhitungan.")
+            # 1. Definisikan kolom/kriteria wajib yang harus ada
+            kriteria_wajib = [
+                "Engine Capacity", "Horsepower", "Total Speed", 
+                "Performance", "Cars Prices", "Seats", "Torque"
+            ]
+            
+            # 2. Cek apakah ada kolom wajib yang tidak ditemukan di file upload
+            kolom_kurang = [col for col in kriteria_wajib if col not in df.columns]
+            
+            # 3. Validasi Kondisi
+            if len(kolom_kurang) > 0:
+                # Jika ada kolom yang kurang, tampilkan error dan JANGAN simpan data
+                st.error(f"⚠️ Format data tidak sesuai! Sistem tidak menemukan kriteria berikut di file Anda: **{', '.join(kolom_kurang)}**")
+                st.info("💡 Tips: Pastikan nama kolom di file Anda sesuai, atau silakan unduh 'Format CSV' untuk melihat contoh struktur yang benar.")
+            else:
+                # Jika semua kolom lengkap, simpan data ke sistem
+                st.session_state.df_mentah = df
+                st.session_state.is_custom_data = True
+                st.success("✅ Data berhasil diunggah dan format sesuai! Anda sekarang bisa kembali ke Menu Utama untuk memulai perhitungan.")
+                
+        except Exception as e:
+            # Menangkap error jika file corrupt atau bukan CSV murni
+            st.error("⚠️ Terjadi kesalahan saat membaca file. Pastikan file yang diunggah benar-benar berformat teks CSV.")
 
+            
     # Navigasi Tombol
     st.write("")
     col_nav1, col_nav2 = st.columns(2)
