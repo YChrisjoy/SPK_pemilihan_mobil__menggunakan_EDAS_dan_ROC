@@ -558,4 +558,14 @@ elif st.session_state.page == 'hitung_hasil':
 
     st.divider()
     if st.button("🔄 Ulangi dari Awal"):
+        # 1. Kembalikan penanda ke default
+        st.session_state.is_custom_data = False
+        
+        # 2. Muat ulang dataset bawaan sistem
+        st.session_state.df_mentah = load_default_data()
+        
+        # 3. Kosongkan bobot kriteria sebelumnya agar tidak mempengaruhi perhitungan selanjutnya
+        st.session_state.bobot_kriteria = {}
+        
+        # 4. Pindah ke halaman utama
         move_to('landing')
