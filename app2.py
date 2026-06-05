@@ -17,14 +17,20 @@ def preprocess_data(df):
     def clean_number(text):
         if pd.isna(text): return np.nan
         text = str(text).lower()
-        text = text.split('-')[0].split('–')[0] # Tangani rentang
-        text = re.sub(r'[^\d.,]', '', text)     # Hapus teks satuan
-        text = text.replace(',', '')            # Hapus koma agar dihitung sebagai ribuan
+        text = text.split('-')[0].split('–')[0] 
+        text = re.sub(r'[^\d.,]', '', text)     
+        
+        # Deteksi jika data menggunakan format angka Indonesia
+        if text.count('.') > 1 or (',' in text and text.rfind(',') > text.rfind('.')):
+            text = text.replace('.', '')  # Hapus titik ribuan
+            text = text.replace(',', '.') # Ubah koma desimal jadi titik
+        else:
+            text = text.replace(',', '')  # Hapus koma ribuan (format standar)
+            
         try:
             return float(text)
         except:
             return np.nan
-        
     # Pembersihan untuk setiap kolom yang ditargetkan
     for col in df_clean.columns:
         df_clean[col] = df_clean[col].apply(clean_number)
