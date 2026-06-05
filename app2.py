@@ -475,13 +475,30 @@ elif st.session_state.page == 'manual_input':
     with col_y:
         if st.button("Hitung Rekomendasi 🚀", type="primary"):
             
+            # 1. Hitung total semua bobot yang diinput user
+            total_bobot = w1 + w2 + w3 + w4 + w5 + w6 + w7
             semua_bobot = [w1, w2, w3, w4, w5, w6, w7]
             
-            # Cek apakah ada bobot yang melanggar aturan
-            if any(bobot > 1.0 or bobot < 0.0 for bobot in semua_bobot):
-                # 2. TAMPILKAN ERROR DI DALAM WADAH KOSONG TADI
-                tempat_notifikasi.error("⚠️ Gagal memproses! Pastikan semua nilai bobot tidak lebih dari 1.0 dan tidak kurang dari 0.0.")
+            # 2. Cek apakah user membiarkan semuanya 0
+            if total_bobot == 0.0:
+                tempat_notifikasi.error("⚠️ Gagal memproses! Total bobot tidak boleh 0. Harap isi minimal satu nilai bobot.")
+            
+            # 3. Cek apakah ada input minus (negatif)
+            elif any(bobot < 0.0 for bobot in semua_bobot):
+                tempat_notifikasi.error("⚠️ Gagal memproses! Nilai bobot tidak boleh kurang dari 0.0.")
+            
+            # 4. Jika aman, lakukan NORMALISASI OTOMATIS dan simpan
             else:
+                if total_bobot != 1.0:
+                    w1 = w1 / total_bobot
+                    w2 = w2 / total_bobot
+                    w3 = w3 / total_bobot
+                    w4 = w4 / total_bobot
+                    w5 = w5 / total_bobot
+                    w6 = w6 / total_bobot
+                    w7 = w7 / total_bobot
+                
+                # Simpan bobot yang sudah dinormalisasi ke dalam sistem
                 st.session_state.bobot_kriteria = {
                     "Cars Prices": w1, "Total Speed": w2, "Engine Capacity": w3,
                     "Horsepower": w4, "Performance": w5, "Seats": w6, "Torque": w7
