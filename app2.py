@@ -7,12 +7,7 @@ from streamlit_sortables import sort_items
 
 #  1. FUNGSI PRE-PROCESSING 
 def preprocess_data(df):
-    kolom_target = ["Engine Capacity/cc", "Horsepower", "Total Speed", "Performance", "Cars Prices", "Seats", "Torque"]
     df_clean = df.copy()
-
-    #variabel untuk tracking
-    baris_awal = len(df_clean)
-    sel_diubah = 0
 
     def clean_number(text):
         if pd.isna(text): return np.nan
@@ -26,30 +21,32 @@ def preprocess_data(df):
             text = text.replace(',', '.') # Ubah koma desimal jadi titik
         else:
             text = text.replace(',', '')  # Hapus koma ribuan (format standar)
-            
         try:
             return float(text)
         except:
             return np.nan
+            
     # Pembersihan untuk setiap kolom yang ditargetkan
     for col in df_clean.columns:
         df_clean[col] = df_clean[col].apply(clean_number)
 
     df_clean = df_clean.dropna()
     
-    baris_dihapus = baris_awal - len(df_clean)
+    syarat_kolom = ["Cars Prices", "Engine Capacity", "Seats", "Torque"]
+    kolom_aman = all(kolom in df_clean.columns for kolom in syarat_kolom)
 
-    #Log untuk debugging
-    print("\n" + "═"*50)
-    print("LAPORAN PRE-PROCESSING DATA")
-    print(f"▶ Total baris data awal      : {baris_awal} baris")
-    print(f"▶ Total sel yang diformat    : {sel_diubah} sel (teks satuan/rentang dihapus)")
-    print(f"▶ Baris dihapus (NaN/Kosong) : {baris_dihapus} baris")
-    print(f"▶ Total baris siap dihitung  : {len(df_clean)} baris")
-    print("Kriteria yang dipilih:")
-    for i, kriteria in enumerate(kolom_target, 1):
-        print(f"{i}. {kriteria}")
-    print("═"*50 + "\n")
+    if kolom_aman:
+        
+        # 2. EKSEKUSI FILTER UNTUK OUTLIER
+        df_clean = df_clean[
+            (df_clean["Cars Prices"] <= 500000) &       
+            (df_clean["Engine Capacity"] <= 8000) &     
+            (df_clean["Seats"] >= 2) &                 
+            (df_clean["Seats"] <= 9) &                  
+            (df_clean["Torque"] <= 800)                
+        ]
+    else:
+        print("\n❌ [ERROR] FILTER GAGAL: Kolom syarat tidak ditemukan!")
 
     return df_clean
 
@@ -155,6 +152,7 @@ def move_to(page_name):
     st.session_state.page = page_name
     st.rerun()
 
+#SIDEBAR STATUS DATASET
 with st.sidebar:
     st.subheader("Status dataset saat ini:")
     if st.session_state.is_custom_data:
@@ -162,9 +160,10 @@ with st.sidebar:
     else:
         st.warning("Dataset: Default (Bawaan Sistem)")
     
-    # Ditambahkan pengecekan agar tidak error jika data kosong
     if st.session_state.df_mentah is not None:
-        st.write(f"Total Mobil: **{len(st.session_state.df_mentah)}** unit")
+        st.write(f"Total Mobil Awal: **{len(st.session_state.df_mentah)}** unit")
+        
+        placeholder_data_bersih = st.empty() 
     else:
         st.write("Total Mobil: **0** unit (Data belum siap)")
 
@@ -236,15 +235,12 @@ elif st.session_state.page == 'upload_page':
     else:
         st.success("✅ Sistem menggunakan **Data Kustom** yang Anda unggah.")
 
-    # Membagi area menjadi 2 kolom (kiri lebih lebar dari kanan)
     col_upload, col_download = st.columns([3, 1])
     
     with col_upload:
         file_upload = st.file_uploader("Pilih file dataset mobil (CSV)", type=['csv'], key="uploader_main")
         
     with col_download:
-        # Menambahkan sedikit ruang kosong di atas tombol 
-        # agar posisi tombol sejajar ke tengah dengan kotak uploader di sebelah kiri
         st.write("") 
         st.write("") 
         
@@ -324,7 +320,7 @@ elif st.session_state.page == 'roc_ranking':
           *Contoh: Cars Prices (Harga yang murah lebih baik), Performance (Waktu akselerasi yang lebih singkat lebih baik).*
         """)
     
-    st.write("") # Spasi kosong
+    st.write("") 
 
     kriteria_list = [
         "Cars Prices", "Total Speed", "Engine Capacity", 
@@ -377,7 +373,7 @@ elif st.session_state.page == 'roc_ranking':
     with col_tengah:
         st.markdown("**Jenis Kriteria:**")
         for val in urutan:
-            jenis = tipe_kriteria[val] # Ambil jenis kriteria dari kamus data
+            jenis = tipe_kriteria[val]
             
             # Beri warna merah jika Cost, hijau jika Benefit
             warna_teks = "#ff4b4b" if jenis == "Cost" else "#3ec673"
@@ -543,6 +539,8 @@ elif st.session_state.page == 'hitung_hasil':
             
             # 1. Preprocessing
             df_bersih = preprocess_data(df_input)
+
+            placeholder_data_bersih.info(f"Total Dipakai (Lolos Filter): **{len(df_bersih)}** unit")
             
             # 2. Perhitungan EDAS
             skor_as = hitung_edas(df_bersih, st.session_state.bobot_kriteria)
